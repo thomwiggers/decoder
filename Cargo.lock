@@ -1,0 +1,28 @@
+[[package]]
+name = "bit_vector"
+version = "0.1.0"
+dependencies = [
+ "zero_one 0.1.0",
+]
+
+[[package]]
+name = "decoder"
+version = "0.1.0"
+dependencies = [
+ "bit_vector 0.1.0",
+ "matrix 0.1.0",
+ "zero_one 0.1.0",
+]
+
+[[package]]
+name = "matrix"
+version = "0.1.0"
+dependencies = [
+ "bit_vector 0.1.0",
+ "zero_one 0.1.0",
+]
+
+[[package]]
+name = "zero_one"
+version = "0.1.0"
+

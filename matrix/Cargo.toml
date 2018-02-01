@@ -1,0 +1,8 @@
+[package]
+name = "matrix"
+version = "0.1.0"
+authors = ["Thom Wiggers <thom@thomwiggers.nl>"]
+
+[dependencies]
+bit_vector = { path = "../bit_vector" }
+zero_one = { path = "../zero_one" }

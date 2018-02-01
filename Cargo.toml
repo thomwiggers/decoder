@@ -1,0 +1,11 @@
+[package]
+name = "decoder"
+version = "0.1.0"
+authors = ["Thom Wiggers <thom@thomwiggers.nl>"]
+
+[workspace]
+
+[dependencies]
+bit_vector = { path = "bit_vector" }
+matrix = { path = "matrix" }
+zero_one = { path = "zero_one" }
