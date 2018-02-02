@@ -1,5 +1,3 @@
-extern crate zero_one;
-
 use std::ops::{Add, Sub, Mul};
 use std::iter::Sum;
 use std::clone::Clone;

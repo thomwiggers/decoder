@@ -6,3 +6,4 @@ authors = ["Thom Wiggers <thom@thomwiggers.nl>"]
 [dependencies]
 bit_vector = { path = "../bit_vector" }
 zero_one = { path = "../zero_one" }
+rand = "0.4.2"
