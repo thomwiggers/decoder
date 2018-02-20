@@ -7,26 +7,32 @@ use self::rand::Rand;
 
 #[derive(Debug, PartialEq)]
 pub struct Matrix<T> {
-    columns: Vec<Vector<T>>,
+    columns: Box<[Vector<T>]>,
 }
 
 impl<T: Zero + One + Rand> Matrix<T> {
     pub fn zero(rows: usize, columns: usize) -> Matrix<T> {
         let columns: Vec<Vector<T>> = (0..columns)
-            .map(|_| Vector::new((0usize..rows).map(|_| T::zero()).collect()))
+            .map(|_| Vector::from_vec((0usize..rows).map(|_| T::zero()).collect()))
             .collect();
 
-        Matrix { columns }
+        Matrix {
+            columns: columns.into_boxed_slice(),
+        }
     }
 
-    pub fn from(columns: Vec<Vector<T>>) -> Matrix<T> {
-        if columns.len() > 0 {
+    pub fn from(columns: Box<[Vector<T>]>) -> Matrix<T> {
+        if !columns.is_empty() {
             let len_first = columns[0].len();
             for col in columns.iter() {
                 assert_eq!(len_first, col.len(), "All columns must be the same length");
             }
         }
         Matrix { columns }
+    }
+
+    pub fn from_vec(columns: Vec<Vector<T>>) -> Matrix<T> {
+        Matrix::from(columns.into_boxed_slice())
     }
 
     pub fn identity(rows: usize, columns: usize) -> Matrix<T> {
@@ -37,7 +43,7 @@ impl<T: Zero + One + Rand> Matrix<T> {
 
         let columns: Vec<Vector<T>> = (0..columns)
             .map(|i| {
-                Vector::new(
+                Vector::from_vec(
                     (0..rows)
                         .map(|j| if i == j { T::one() } else { T::zero() })
                         .collect(),
@@ -45,7 +51,9 @@ impl<T: Zero + One + Rand> Matrix<T> {
             })
             .collect();
 
-        Matrix { columns }
+        Matrix {
+            columns: columns.into_boxed_slice(),
+        }
     }
 
     pub fn random(rows: usize, columns: usize) -> Matrix<T> {
@@ -58,9 +66,11 @@ impl<T: Zero + One + Rand> Matrix<T> {
         function: fn(usize, usize) -> T,
     ) -> Matrix<T> {
         let columns: Vec<Vector<T>> = (0..columns)
-            .map(|i| Vector::new((0..rows).map(|j| function(i, j)).collect()))
+            .map(|i| Vector::from_vec((0..rows).map(|j| function(i, j)).collect()))
             .collect();
-        Matrix { columns }
+        Matrix {
+            columns: columns.into_boxed_slice(),
+        }
     }
 
     pub fn ncols(&self) -> usize {
@@ -73,6 +83,29 @@ impl<T: Zero + One + Rand> Matrix<T> {
         }
         self.columns[0].len()
     }
+
+    pub fn get(&self, row: usize, col: usize) -> &T {
+        &self.columns[col][row]
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: T) {
+        *(&mut self.columns[col][row]) = value;
+    }
+
+    pub fn get_segment(&self, row: usize, col: usize, rows: usize, cols: usize) -> Matrix<&T> {
+        assert!(
+            row + rows < self.nrows(),
+            "Index out of bounds: too many rows"
+        );
+        assert!(
+            col + cols < self.ncols(),
+            "Index out of bounds: too many cols"
+        );
+
+        Matrix {
+            columns: Vec::new().into_boxed_slice(),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -83,19 +116,19 @@ mod tests {
     fn ncols_and_rows() {
         let m = Matrix {
             columns: vec![
-                Vector::new(vec![1, 2, 3]),
-                Vector::new(vec![1, 2, 3]),
-                Vector::new(vec![1, 2, 3]),
-                Vector::new(vec![1, 2, 3]),
-            ],
+                Vector::from_vec(vec![1, 2, 3]),
+                Vector::from_vec(vec![1, 2, 3]),
+                Vector::from_vec(vec![1, 2, 3]),
+                Vector::from_vec(vec![1, 2, 3]),
+            ].into_boxed_slice(),
         };
         assert_eq!(m.ncols(), 4);
         assert_eq!(m.nrows(), 3);
     }
 
     #[test]
-    fn test_from() {
-        let m = Matrix::from(vec![Vector::new(vec![1])]);
+    fn test_from_vec() {
+        let m = Matrix::from_vec(vec![Vector::from_vec(vec![1])]);
         assert_eq!(m.nrows(), 1);
         assert_eq!(m.ncols(), 1);
     }
@@ -110,7 +143,10 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_from_unequal_length() {
-        Matrix::from(vec![Vector::new(vec![1]), Vector::new(vec![1, 2])]);
+        Matrix::from_vec(vec![
+            Vector::from_vec(vec![1]),
+            Vector::from_vec(vec![1, 2]),
+        ]);
     }
 
     #[test]
