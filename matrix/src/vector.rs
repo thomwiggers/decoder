@@ -225,13 +225,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn add_diff_sized() {
-        &Vector::from_vec(vec![0]) + &Vector::new(vec![0, 1]);
+        &Vector::from_vec(vec![0]) + &Vector::from_vec(vec![0, 1]);
     }
 
     #[test]
     #[should_panic]
     fn sub_diff_sized() {
-        &Vector::from_vec(vec![0]) - &Vector::new(vec![0, 1]);
+        &Vector::from_vec(vec![0]) - &Vector::from_vec(vec![0, 1]);
     }
 
     #[test]
