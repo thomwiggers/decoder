@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Sub, Mul, Index};
 use std::iter::Sum;
 use std::clone::Clone;
 
@@ -13,6 +13,18 @@ impl<T> Vector<T> {
             elements
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.elements.len()
+    }
+}
+
+impl<T> Index<usize> for Vector<T> {
+    type Output = T;
+
+    fn index(&self, idx: usize) -> &T {
+        &self.elements[idx]
+    }
 }
 
 impl<'a, 'b, T: Add<Output=T> + Clone> Add<&'b Vector<T>> for &'a Vector<T> {
@@ -20,14 +32,50 @@ impl<'a, 'b, T: Add<Output=T> + Clone> Add<&'b Vector<T>> for &'a Vector<T> {
 
     #[inline]
     fn add(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len(), 
+        assert_eq!(self.elements.len(), other.elements.len(),
                    "Vectors should be of equal length");
 
-        Vector { 
-            elements: self.elements.clone()
+        Vector {
+            elements: self.elements
+                .iter()
+                .zip(other.elements.iter())
+                .map(|(x, y)| x.clone() + y.clone())
+                .collect()
+        }
+    }
+}
+
+impl<T: Add<Output=T>> Add<Vector<T>> for Vector<T> {
+    type Output = Vector<T>;
+
+    #[inline]
+    fn add(self, other: Vector<T>) -> Vector<T> {
+        assert_eq!(self.elements.len(), other.elements.len(),
+                   "Vectors should be of equal length");
+
+        Vector {
+            elements: self.elements
                 .into_iter()
-                .zip(other.elements.clone())
+                .zip(other.elements)
                 .map(|(x, y)| x + y)
+                .collect()
+        }
+    }
+}
+
+impl<T: Sub<Output=T>> Sub<Vector<T>> for Vector<T> {
+    type Output = Vector<T>;
+
+    #[inline]
+    fn sub(self, other: Vector<T>) -> Vector<T> {
+        assert_eq!(self.elements.len(), other.elements.len(),
+                   "Vectors should be of equal length");
+
+        Vector {
+            elements: self.elements
+                .into_iter()
+                .zip(other.elements)
+                .map(|(x, y)| x - y)
                 .collect()
         }
     }
@@ -38,13 +86,14 @@ impl<'a, 'b, T: Sub<Output=T> + Clone> Sub<&'b Vector<T>> for &'a Vector<T> {
 
     #[inline]
     fn sub(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len());
+        assert_eq!(self.elements.len(), other.elements.len(),
+                   "Vectors should be of equal length");
 
-        Vector { 
-            elements: self.elements.clone()
-                .into_iter()
-                .zip(other.elements.clone())
-                .map(|(x, y)| x - y)
+        Vector {
+            elements: self.elements
+                .iter()
+                .zip(other.elements.iter())
+                .map(|(x, y)| x.clone() - y.clone())
                 .collect()
         }
     }
@@ -55,21 +104,45 @@ impl<'a, 'b, T: Mul<Output=T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vecto
 
     #[inline]
     fn mul(self, other: &'b Vector<T>) -> T {
-        assert_eq!(self.elements.len(), other.elements.len());
+        assert_eq!(self.elements.len(), other.elements.len(),
+                   "Vectors should be of equal length");
 
-        self.elements.clone()
+        self.elements
+            .iter()
+            .zip(other.elements.iter())
+            .map(|(x, y)| x.clone() * y.clone())
+            .sum()
+    }
+}
+
+impl<T: Mul<Output=T> + Sum<T>> Mul<Vector<T>> for Vector<T> {
+    type Output = T;
+
+    #[inline]
+    fn mul(self, other: Vector<T>) -> T {
+        assert_eq!(self.elements.len(), other.elements.len(),
+                   "Vectors should be of equal length");
+
+        self.elements
             .into_iter()
-            .zip(other.elements.clone())
+            .zip(other.elements)
             .map(|(x, y)| x * y)
             .sum()
     }
 }
-        
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
+
+    #[test]
+    fn len() {
+        let v1: Vector<i32> = Vector::new(vec![1,2,3]);
+        assert_eq!(v1.len(), 3);
+        let v2: Vector<i32> = Vector::new(vec![1,2]);
+        assert_eq!(v2.len(), 2);
+    }
 
     #[test]
     fn add_vectors() {
@@ -92,6 +165,7 @@ mod tests {
         let v1: Vector<i32> = Vector::new(vec![1, 3, -5]);
         let v2: Vector<i32> = Vector::new(vec![4, -2, -1]);
         assert_eq!(&v1 * &v2, 3i32);
+        assert_eq!(v1 * v2, 3i32);
     }
 
     #[test]
@@ -106,9 +180,23 @@ mod tests {
         &Vector::new(vec![0]) - &Vector::new(vec![0, 1]);
     }
 
-    fn get_two_vectors(size: u32) -> (Vector<u32>, Vector<u32>) {
-        let mut v1 = Vec::with_capacity(10000);
-        let mut v2 = Vec::with_capacity(10000);
+    #[test]
+    fn test_get_index() {
+        let vec = Vector::new(vec![1,2,3]);
+        assert_eq!(vec[0], 1);
+        assert_eq!(vec[1], 2);
+        assert_eq!(vec[2], 3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_index_out_of_bounds() {
+        Vector::new(vec![1])[100];
+    }
+
+    fn get_two_vectors(size: usize) -> (Vector<usize>, Vector<usize>) {
+        let mut v1 = Vec::with_capacity(size);
+        let mut v2 = Vec::with_capacity(size);
         for i in 0 .. size {
             v1.push(i);
             v2.push(i);
@@ -119,20 +207,50 @@ mod tests {
     }
 
     #[bench]
-    fn bench_add_vector(b: &mut Bencher) {
-        let (v1, v2) = get_two_vectors(10000);
-
+    fn bench_add_vector_borrowed(b: &mut Bencher) {
         b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
             &v1 + &v2
         })
     }
 
     #[bench]
-    fn bench_sub_vector(b: &mut Bencher) {
-        let (v1, v2) = get_two_vectors(10000);
-
+    fn bench_add_vector_move(b: &mut Bencher) {
         b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
+            v1 + v2
+        })
+    }
+
+    #[bench]
+    fn bench_sub_vector_borrowed(b: &mut Bencher) {
+        b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
             &v1 - &v2
+        })
+    }
+
+    #[bench]
+    fn bench_sub_vector_move(b: &mut Bencher) {
+        b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
+            v1 - v2
+        })
+    }
+
+    #[bench]
+    fn bench_mul_vector_borrowed(b: &mut Bencher) {
+        b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
+            &v1 * &v2
+        })
+    }
+
+    #[bench]
+    fn bench_mul_vector_move(b: &mut Bencher) {
+        b.iter(|| {
+            let (v1, v2) = get_two_vectors(100);
+            v1 * v2
         })
     }
 }
