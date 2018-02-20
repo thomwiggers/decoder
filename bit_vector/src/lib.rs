@@ -6,37 +6,30 @@ use std::ops::{Add, AddAssign};
 use std::ops::{BitXor, BitXorAssign};
 use std::ops::{Sub, SubAssign};
 
-use zero_one::{Zero, One};
+use zero_one::{One, Zero};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Bit<T> {
-    value: T
+    value: T,
 }
 
 impl<T: Zero + One> Bit<T> {
     pub fn zero() -> Bit<T> {
-        Bit {
-            value: T::zero()
-        }
+        Bit { value: T::zero() }
     }
 
     pub fn one() -> Bit<T> {
-        Bit {
-            value: T::one()
-        }
+        Bit { value: T::one() }
     }
 }
 
 impl<T> Bit<T> {
     pub fn from(value: T) -> Bit<T> {
-        Bit {
-            value
-        }
+        Bit { value }
     }
 }
 
-
-impl<T: BitXor<Output=T>> Add for Bit<T> {
+impl<T: BitXor<Output = T>> Add for Bit<T> {
     type Output = Bit<T>;
     #[inline]
     fn add(self, other: Bit<T>) -> Bit<T> {
@@ -62,24 +55,23 @@ impl<T: BitXorAssign<T>> SubAssign for Bit<T> {
     }
 }
 
-impl<T: BitXor<Output=T>> BitXor for Bit<T> {
+impl<T: BitXor<Output = T>> BitXor for Bit<T> {
     type Output = Bit<T>;
     #[inline]
     fn bitxor(self, other: Bit<T>) -> Bit<T> {
-        Bit { 
-            value: self.value ^ other.value 
+        Bit {
+            value: self.value ^ other.value,
         }
     }
 }
 
-impl<T: BitXor<Output=T>> Sub for Bit<T> {
+impl<T: BitXor<Output = T>> Sub for Bit<T> {
     type Output = Bit<T>;
     #[inline]
     fn sub(self, other: Bit<T>) -> Bit<T> {
         self ^ other
     }
 }
-
 
 macro_rules! tests_for_type {
     ($type: ty, $name: ident, $zero: expr, $one: expr) => {
@@ -129,7 +121,7 @@ macro_rules! tests_for_type {
                 bit += Bit::one();
                 assert_eq!(bit, Bit::zero());
             }
-            
+
             #[test]
             fn sub_assign() {
                 let mut bit: Bit<$type> = Bit::zero();
@@ -145,7 +137,7 @@ macro_rules! tests_for_type {
                 assert_eq!(zero + one, one);
                 assert_eq!(one + zero, one);
             }
-            
+
             #[test]
             fn one_plus_one_eq_zero() {
                 let zero: Bit<$type> = Bit::zero();

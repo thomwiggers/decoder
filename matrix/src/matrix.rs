@@ -1,33 +1,22 @@
-extern crate zero_one;
 extern crate rand;
+extern crate zero_one;
 use vector::Vector;
-use self::zero_one::{Zero, One};
+use self::zero_one::{One, Zero};
 
 use self::rand::Rand;
 
-
 #[derive(Debug, PartialEq)]
-pub struct Matrix<T>{
-    columns: Vec<Vector<T>>
+pub struct Matrix<T> {
+    columns: Vec<Vector<T>>,
 }
 
 impl<T: Zero + One + Rand> Matrix<T> {
     pub fn zero(rows: usize, columns: usize) -> Matrix<T> {
-        let columns: Vec<Vector<T>> = 
-            (0..columns)
-            .map(
-                |_| {
-                    Vector::new(
-                        (0usize..rows)
-                            .map(|_| T::zero())
-                            .collect()
-                    )
-                })
+        let columns: Vec<Vector<T>> = (0..columns)
+            .map(|_| Vector::new((0usize..rows).map(|_| T::zero()).collect()))
             .collect();
 
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 
     pub fn from(columns: Vec<Vector<T>>) -> Matrix<T> {
@@ -37,52 +26,41 @@ impl<T: Zero + One + Rand> Matrix<T> {
                 assert_eq!(len_first, col.len(), "All columns must be the same length");
             }
         }
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 
     pub fn identity(rows: usize, columns: usize) -> Matrix<T> {
-        assert_eq!(rows, columns, "Rows needs to equal columns for Identity matrices");
+        assert_eq!(
+            rows, columns,
+            "Rows needs to equal columns for Identity matrices"
+        );
 
         let columns: Vec<Vector<T>> = (0..columns)
             .map(|i| {
                 Vector::new(
                     (0..rows)
-                        .map(|j| {
-                            if i == j {
-                                T::one()
-                            } else {
-                                T::zero()
-                            }
-                        }).collect()
-                )
-            }).collect();
-
-        Matrix {
-            columns
-        }
-    }
-
-    pub fn random(rows: usize, columns: usize) -> Matrix<T> {
-        Matrix::from_function(rows, columns, |_,_| rand::random::<T>())
-    }
-
-    pub fn from_function(rows: usize, columns: usize, function: fn(usize, usize) -> T) -> Matrix<T> {
-        let columns: Vec<Vector<T>> = (0..columns)
-            .map(|i| {
-                Vector::new(
-                    (0..rows)
-                        .map(|j| {
-                            function(i, j)
-                        })
-                        .collect()
+                        .map(|j| if i == j { T::one() } else { T::zero() })
+                        .collect(),
                 )
             })
             .collect();
-        Matrix {
-            columns
-        }
+
+        Matrix { columns }
+    }
+
+    pub fn random(rows: usize, columns: usize) -> Matrix<T> {
+        Matrix::from_function(rows, columns, |_, _| rand::random::<T>())
+    }
+
+    pub fn from_function(
+        rows: usize,
+        columns: usize,
+        function: fn(usize, usize) -> T,
+    ) -> Matrix<T> {
+        let columns: Vec<Vector<T>> = (0..columns)
+            .map(|i| Vector::new((0..rows).map(|j| function(i, j)).collect()))
+            .collect();
+        Matrix { columns }
     }
 
     pub fn ncols(&self) -> usize {
@@ -109,7 +87,7 @@ mod tests {
                 Vector::new(vec![1, 2, 3]),
                 Vector::new(vec![1, 2, 3]),
                 Vector::new(vec![1, 2, 3]),
-            ]
+            ],
         };
         assert_eq!(m.ncols(), 4);
         assert_eq!(m.nrows(), 3);
@@ -132,11 +110,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_from_unequal_length() {
-        Matrix::from(
-            vec![
-                Vector::new(vec![1]),
-                Vector::new(vec![1,2])
-            ]);
+        Matrix::from(vec![Vector::new(vec![1]), Vector::new(vec![1, 2])]);
     }
 
     #[test]
@@ -151,9 +125,9 @@ mod tests {
         assert_eq!(10, (0..10).map(|i| m.columns[i][i]).sum());
 
         // doesn't work without :i32
-        let acc: i32 = (0..10).map(
-                |i| (0..10).map(|j| m.columns[i][j]).sum(): i32
-            ).sum();
+        let acc: i32 = (0..10)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .sum();
         assert_eq!(10, acc);
     }
 
@@ -167,9 +141,9 @@ mod tests {
         }
 
         // doesn't work without :i32
-        let acc: i32 = (0..10).map(
-                |i| (0..10).map(|j| m.columns[i][j]).sum(): i32
-            ).sum();
+        let acc: i32 = (0..10)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .sum();
         assert_eq!(0, acc);
     }
 

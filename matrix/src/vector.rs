@@ -1,17 +1,15 @@
-use std::ops::{Add, Sub, Mul, Index};
+use std::ops::{Add, Index, Mul, Sub};
 use std::iter::Sum;
 use std::clone::Clone;
 
 #[derive(Debug, PartialEq)]
 pub struct Vector<T> {
-    elements: Vec<T>
+    elements: Vec<T>,
 }
 
 impl<T> Vector<T> {
     pub fn new(elements: Vec<T>) -> Vector<T> {
-        Vector {
-            elements
-        }
+        Vector { elements }
     }
 
     pub fn len(&self) -> usize {
@@ -27,85 +25,100 @@ impl<T> Index<usize> for Vector<T> {
     }
 }
 
-impl<'a, 'b, T: Add<Output=T> + Clone> Add<&'b Vector<T>> for &'a Vector<T> {
+impl<'a, 'b, T: Add<Output = T> + Clone> Add<&'b Vector<T>> for &'a Vector<T> {
     type Output = Vector<T>;
 
     #[inline]
     fn add(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         Vector {
             elements: self.elements
                 .iter()
                 .zip(other.elements.iter())
                 .map(|(x, y)| x.clone() + y.clone())
-                .collect()
+                .collect(),
         }
     }
 }
 
-impl<T: Add<Output=T>> Add<Vector<T>> for Vector<T> {
+impl<T: Add<Output = T>> Add<Vector<T>> for Vector<T> {
     type Output = Vector<T>;
 
     #[inline]
     fn add(self, other: Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         Vector {
             elements: self.elements
                 .into_iter()
                 .zip(other.elements)
                 .map(|(x, y)| x + y)
-                .collect()
+                .collect(),
         }
     }
 }
 
-impl<T: Sub<Output=T>> Sub<Vector<T>> for Vector<T> {
+impl<T: Sub<Output = T>> Sub<Vector<T>> for Vector<T> {
     type Output = Vector<T>;
 
     #[inline]
     fn sub(self, other: Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         Vector {
             elements: self.elements
                 .into_iter()
                 .zip(other.elements)
                 .map(|(x, y)| x - y)
-                .collect()
+                .collect(),
         }
     }
 }
 
-impl<'a, 'b, T: Sub<Output=T> + Clone> Sub<&'b Vector<T>> for &'a Vector<T> {
+impl<'a, 'b, T: Sub<Output = T> + Clone> Sub<&'b Vector<T>> for &'a Vector<T> {
     type Output = Vector<T>;
 
     #[inline]
     fn sub(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         Vector {
             elements: self.elements
                 .iter()
                 .zip(other.elements.iter())
                 .map(|(x, y)| x.clone() - y.clone())
-                .collect()
+                .collect(),
         }
     }
 }
 
-impl<'a, 'b, T: Mul<Output=T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vector<T> {
+impl<'a, 'b, T: Mul<Output = T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vector<T> {
     type Output = T;
 
     #[inline]
     fn mul(self, other: &'b Vector<T>) -> T {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         self.elements
             .iter()
@@ -115,13 +128,16 @@ impl<'a, 'b, T: Mul<Output=T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vecto
     }
 }
 
-impl<T: Mul<Output=T> + Sum<T>> Mul<Vector<T>> for Vector<T> {
+impl<T: Mul<Output = T> + Sum<T>> Mul<Vector<T>> for Vector<T> {
     type Output = T;
 
     #[inline]
     fn mul(self, other: Vector<T>) -> T {
-        assert_eq!(self.elements.len(), other.elements.len(),
-                   "Vectors should be of equal length");
+        assert_eq!(
+            self.elements.len(),
+            other.elements.len(),
+            "Vectors should be of equal length"
+        );
 
         self.elements
             .into_iter()
@@ -138,9 +154,9 @@ mod tests {
 
     #[test]
     fn len() {
-        let v1: Vector<i32> = Vector::new(vec![1,2,3]);
+        let v1: Vector<i32> = Vector::new(vec![1, 2, 3]);
         assert_eq!(v1.len(), 3);
-        let v2: Vector<i32> = Vector::new(vec![1,2]);
+        let v2: Vector<i32> = Vector::new(vec![1, 2]);
         assert_eq!(v2.len(), 2);
     }
 
@@ -182,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_get_index() {
-        let vec = Vector::new(vec![1,2,3]);
+        let vec = Vector::new(vec![1, 2, 3]);
         assert_eq!(vec[0], 1);
         assert_eq!(vec[1], 2);
         assert_eq!(vec[2], 3);
@@ -197,7 +213,7 @@ mod tests {
     fn get_two_vectors(size: usize) -> (Vector<usize>, Vector<usize>) {
         let mut v1 = Vec::with_capacity(size);
         let mut v2 = Vec::with_capacity(size);
-        for i in 0 .. size {
+        for i in 0..size {
             v1.push(i);
             v2.push(i);
         }
