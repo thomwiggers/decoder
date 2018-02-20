@@ -6,8 +6,8 @@ before_script:
   - rustup component add rustfmt-preview
 
 script:
-  - cargo fmt --verbose --all -- --write-mode diff
-  - cargo build --verbose --all
-  - cargo test --verbose --all
+  - cargo fmt --all -- --write-mode diff
+  - cargo build --all
+  - cargo test --all
 
 cache: cargo
