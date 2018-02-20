@@ -1,4 +1,4 @@
-use std::ops::{Add, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, Deref, Index, IndexMut, Mul, Range, Sub};
 use std::iter::Sum;
 use std::clone::Clone;
 
@@ -14,8 +14,23 @@ impl<T> Vector<T> {
         }
     }
 
+    pub fn from(elements: Box<[T]>) -> Vector<T> {
+        Vector { elements }
+    }
+
     pub fn len(&self) -> usize {
         self.elements.len()
+    }
+
+    pub fn take(self) -> Box<[T]> {
+        self.elements
+    }
+}
+
+impl<T> Deref for Vector<T> {
+    type Target = Box<[T]>;
+    fn deref(&self) -> &Box<[T]> {
+        &self.elements
     }
 }
 
@@ -30,6 +45,13 @@ impl<T> Index<usize> for Vector<T> {
 impl<T> IndexMut<usize> for Vector<T> {
     fn index_mut(&mut self, idx: usize) -> &mut T {
         &mut self.elements[idx]
+    }
+}
+
+impl<T> Index<Range<usize>> for Vector<T> {
+    type Output = [T];
+    fn index(&self, idx: Range<usize>) -> &[T] {
+        &self.elements[idx]
     }
 }
 

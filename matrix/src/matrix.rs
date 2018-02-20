@@ -102,8 +102,40 @@ impl<T: Zero + One + Rand> Matrix<T> {
             "Index out of bounds: too many cols"
         );
 
+        let mut columns: Vec<Vector<&T>> = Vec::with_capacity(col + cols);
+        for col in &self.columns[col..col + cols] {
+            let rows = &col[row..row + rows];
+            let rows = rows.iter().collect::<Vec<&T>>();
+
+            columns.push(Vector::from(rows.into_boxed_slice()));
+        }
+
         Matrix {
-            columns: Vec::new().into_boxed_slice(),
+            columns: columns.into_boxed_slice(),
+        }
+    }
+
+    pub fn set_segment(&mut self, row: usize, col: usize, segment: Matrix<T>) {
+        let rows = segment.nrows();
+        let cols = segment.ncols();
+        assert!(
+            row + rows < self.nrows(),
+            "Index out of bounds: too many rows"
+        );
+        assert!(
+            col + cols < self.ncols(),
+            "Index out of bounds: too many cols"
+        );
+
+        let mut columns: Vec<Vector<T>> = segment.columns.into_vec();
+
+        for i in (0..cols).rev() {
+            // takes ownership of the inner element
+            let mut new_row = columns.pop().unwrap().take().into_vec();
+            for j in (0..rows).rev() {
+                let bit: T = new_row.pop().unwrap();
+                self.columns[cols + i][rows + j] = bit;
+            }
         }
     }
 }
