@@ -48,7 +48,7 @@ mod tests {
     fn zero() {
         assert_eq!(u32::zero(), 0u32);
         assert_eq!(i32::zero(), 0i32);
-        assert_eq!(u64::zero(), 0i64);
+        assert_eq!(u64::zero(), 0u64);
         assert_eq!(i64::zero(), 0i64);
         assert_eq!(bool::zero(), false);
     }
