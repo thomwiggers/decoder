@@ -10,17 +10,13 @@ pub struct Matrix<T> {
     columns: Vec<Vector<T>>,
 }
 
-
-
 impl<T: Zero> Matrix<T> {
     pub fn zero(rows: usize, columns: usize) -> Matrix<T> {
         let columns: Vec<Vector<T>> = (0..columns)
             .map(|_| Vector::from_vec((0usize..rows).map(|_| T::zero()).collect()))
             .collect();
 
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 }
 
@@ -41,14 +37,11 @@ impl<T: Zero + One> Matrix<T> {
             })
             .collect();
 
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 }
 
 impl<T: Rand> Matrix<T> {
-
     pub fn random(rows: usize, columns: usize) -> Matrix<T> {
         Matrix::from_function(rows, columns, |_, _| rand::random::<T>())
     }
@@ -73,9 +66,7 @@ impl<T> Matrix<T> {
         let columns: Vec<Vector<T>> = (0..columns)
             .map(|i| Vector::from_vec((0..rows).map(|j| function(i, j)).collect()))
             .collect();
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 
     pub fn ncols(&self) -> usize {
@@ -111,9 +102,7 @@ impl<T> Matrix<T> {
             columns.push(Vector::from_vec(rows));
         }
 
-        Matrix {
-            columns
-        }
+        Matrix { columns }
     }
 }
 
@@ -142,7 +131,7 @@ impl<T: Copy> Matrix<T> {
 
         for (i, column) in columns.into_iter().enumerate() {
             for (j, element) in column.into_iter().enumerate() {
-                self.columns[col+i][row+j] = *element;
+                self.columns[col + i][row + j] = *element;
             }
         }
     }
@@ -160,7 +149,7 @@ mod tests {
                 Vector::from_vec(vec![1, 2, 3]),
                 Vector::from_vec(vec![1, 2, 3]),
                 Vector::from_vec(vec![1, 2, 3]),
-            ]
+            ],
         };
         assert_eq!(m.ncols(), 4);
         assert_eq!(m.nrows(), 3);
@@ -225,7 +214,7 @@ mod tests {
 
     #[test]
     fn test_from_function() {
-        let m = Matrix::from_function(10, 10, |_,_| 1);
+        let m = Matrix::from_function(10, 10, |_, _| 1);
         // check size
         assert_eq!(10, m.columns.len());
         for i in 0..10 {
@@ -239,8 +228,8 @@ mod tests {
 
     #[test]
     fn test_get() {
-        let m = Matrix::from_function(10, 10, |x,y| 10*x+y);
-        assert_eq!(&92, m.get(2,9));
+        let m = Matrix::from_function(10, 10, |x, y| 10 * x + y);
+        assert_eq!(&92, m.get(2, 9));
     }
 
     #[test]

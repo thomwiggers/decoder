@@ -68,7 +68,7 @@ impl<T: Clone> ops::IndexMut<usize> for Vector<T> {
 macro_rules! binary_operator {
     ($type:ident, $funcname:ident, $operator:tt) => {
         impl<'a, T: ops::$type<Output = T>> ops::$type<&'a Vector<T>> for &'a Vector<T>
-            where &'a T: ops::$type<Output = T> 
+            where &'a T: ops::$type<Output = T>
         {
             type Output = Vector<T>;
 
@@ -122,9 +122,9 @@ macro_rules! binary_operator {
 binary_operator!(Add, add, +);
 binary_operator!(Sub, sub, -);
 
-
 impl<'a, T: ops::Mul<Output = T> + iter::Sum<T>> ops::Mul<&'a Vector<T>> for &'a Vector<T>
-    where &'a T: ops::Mul<Output = T>
+where
+    &'a T: ops::Mul<Output = T>,
 {
     type Output = T;
 
@@ -148,8 +148,7 @@ impl<'a, T: ops::Mul<Output = T> + iter::Sum<T>> ops::Mul<&'a Vector<T>> for &'a
     }
 }
 
-impl<T: ops::Mul<Output = T> + iter::Sum<T> + Copy> ops::Mul<Vector<T>> for Vector<T>
-{
+impl<T: ops::Mul<Output = T> + iter::Sum<T> + Copy> ops::Mul<Vector<T>> for Vector<T> {
     type Output = T;
 
     #[inline]
