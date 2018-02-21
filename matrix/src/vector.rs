@@ -1,5 +1,6 @@
 use std::ops;
-use std::iter::Sum;
+use std::vec;
+use std::iter;
 use std::clone::Clone;
 use std::rc::Rc;
 
@@ -12,10 +13,6 @@ impl<T> Vector<T> {
     pub fn from_vec(elements: Vec<T>) -> Vector<T> {
         let elements = elements.into_iter().map(Rc::new).collect();
         Vector { elements: elements }
-    }
-
-    pub fn from(elements: Box<[T]>) -> Vector<T> {
-        Vector::from_vec(elements.into_vec())
     }
 
     pub fn repeat(n: usize, element: T) -> Vector<T> {
@@ -35,6 +32,15 @@ impl<T> Clone for Vector<T> {
         Vector {
             elements: self.elements.iter().map(|e| e.clone()).collect(),
         }
+    }
+}
+
+impl<T> iter::IntoIterator for Vector<T> {
+    type Item = Rc<T>;
+    type IntoIter = vec::IntoIter<Rc<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.elements.into_iter()
     }
 }
 
@@ -117,7 +123,7 @@ binary_operator!(Add, add, +);
 binary_operator!(Sub, sub, -);
 
 
-impl<'a, T: ops::Mul<Output = T> + Sum<T>> ops::Mul<&'a Vector<T>> for &'a Vector<T>
+impl<'a, T: ops::Mul<Output = T> + iter::Sum<T>> ops::Mul<&'a Vector<T>> for &'a Vector<T>
     where &'a T: ops::Mul<Output = T>
 {
     type Output = T;
@@ -142,7 +148,7 @@ impl<'a, T: ops::Mul<Output = T> + Sum<T>> ops::Mul<&'a Vector<T>> for &'a Vecto
     }
 }
 
-impl<T: ops::Mul<Output = T> + Sum<T> + Copy> ops::Mul<Vector<T>> for Vector<T> 
+impl<T: ops::Mul<Output = T> + iter::Sum<T> + Copy> ops::Mul<Vector<T>> for Vector<T>
 {
     type Output = T;
 

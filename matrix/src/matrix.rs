@@ -7,34 +7,24 @@ use self::rand::Rand;
 
 #[derive(Debug, PartialEq)]
 pub struct Matrix<T> {
-    columns: Box<[Vector<T>]>,
+    columns: Vec<Vector<T>>,
 }
 
-impl<T: Zero + One + Rand> Matrix<T> {
+
+
+impl<T: Zero> Matrix<T> {
     pub fn zero(rows: usize, columns: usize) -> Matrix<T> {
         let columns: Vec<Vector<T>> = (0..columns)
             .map(|_| Vector::from_vec((0usize..rows).map(|_| T::zero()).collect()))
             .collect();
 
         Matrix {
-            columns: columns.into_boxed_slice(),
+            columns
         }
     }
+}
 
-    pub fn from(columns: Box<[Vector<T>]>) -> Matrix<T> {
-        if !columns.is_empty() {
-            let len_first = columns[0].len();
-            for col in columns.iter() {
-                assert_eq!(len_first, col.len(), "All columns must be the same length");
-            }
-        }
-        Matrix { columns }
-    }
-
-    pub fn from_vec(columns: Vec<Vector<T>>) -> Matrix<T> {
-        Matrix::from(columns.into_boxed_slice())
-    }
-
+impl<T: Zero + One> Matrix<T> {
     pub fn identity(rows: usize, columns: usize) -> Matrix<T> {
         assert_eq!(
             rows, columns,
@@ -52,12 +42,27 @@ impl<T: Zero + One + Rand> Matrix<T> {
             .collect();
 
         Matrix {
-            columns: columns.into_boxed_slice(),
+            columns
         }
     }
+}
+
+impl<T: Rand> Matrix<T> {
 
     pub fn random(rows: usize, columns: usize) -> Matrix<T> {
         Matrix::from_function(rows, columns, |_, _| rand::random::<T>())
+    }
+}
+
+impl<T> Matrix<T> {
+    pub fn from_vec(columns: Vec<Vector<T>>) -> Matrix<T> {
+        if !columns.is_empty() {
+            let len_first = columns[0].len();
+            for col in columns.iter() {
+                assert_eq!(len_first, col.len(), "All columns must be the same length");
+            }
+        }
+        Matrix { columns }
     }
 
     pub fn from_function(
@@ -69,7 +74,7 @@ impl<T: Zero + One + Rand> Matrix<T> {
             .map(|i| Vector::from_vec((0..rows).map(|j| function(i, j)).collect()))
             .collect();
         Matrix {
-            columns: columns.into_boxed_slice(),
+            columns
         }
     }
 
@@ -88,10 +93,6 @@ impl<T: Zero + One + Rand> Matrix<T> {
         &self.columns[col][row]
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: T) {
-        *(&mut self.columns[col][row]) = value;
-    }
-
     pub fn get_segment(&self, row: usize, col: usize, rows: usize, cols: usize) -> Matrix<&T> {
         assert!(
             row + rows < self.nrows(),
@@ -105,14 +106,24 @@ impl<T: Zero + One + Rand> Matrix<T> {
         let mut columns: Vec<Vector<&T>> = Vec::with_capacity(col + cols);
         for col in &self.columns[col..col + cols] {
             let rows = &col[row..row + rows];
-            let rows = rows.iter().collect::<Vec<&T>>();
+            let rows = rows.iter().map(|x| &**x).collect::<Vec<&T>>();
 
-            columns.push(Vector::from(rows.into_boxed_slice()));
+            columns.push(Vector::from_vec(rows));
         }
 
         Matrix {
-            columns: columns.into_boxed_slice(),
+            columns
         }
+    }
+}
+
+impl<T: Copy> Matrix<T> {
+    pub fn get_mut(&mut self, row: usize, col: usize) -> &mut T {
+        &mut self.columns[col][row]
+    }
+
+    pub fn set(&mut self, row: usize, col: usize, value: T) {
+        self.columns[col][row] = value;
     }
 
     pub fn set_segment(&mut self, row: usize, col: usize, segment: Matrix<T>) {
@@ -127,14 +138,11 @@ impl<T: Zero + One + Rand> Matrix<T> {
             "Index out of bounds: too many cols"
         );
 
-        let mut columns: Vec<Vector<T>> = segment.columns.into_vec();
+        let columns: Vec<Vector<T>> = segment.columns;
 
-        for i in (0..cols).rev() {
-            // takes ownership of the inner element
-            let mut new_row = columns.pop().unwrap().take().into_vec();
-            for j in (0..rows).rev() {
-                let bit: T = new_row.pop().unwrap();
-                self.columns[cols + i][rows + j] = bit;
+        for (i, column) in columns.into_iter().enumerate() {
+            for (j, element) in column.into_iter().enumerate() {
+                self.columns[col+i][row+j] = *element;
             }
         }
     }
@@ -152,7 +160,7 @@ mod tests {
                 Vector::from_vec(vec![1, 2, 3]),
                 Vector::from_vec(vec![1, 2, 3]),
                 Vector::from_vec(vec![1, 2, 3]),
-            ].into_boxed_slice(),
+            ]
         };
         assert_eq!(m.ncols(), 4);
         assert_eq!(m.nrows(), 3);
@@ -213,6 +221,48 @@ mod tests {
             .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
             .sum();
         assert_eq!(0, acc);
+    }
+
+    #[test]
+    fn test_from_function() {
+        let m = Matrix::from_function(10, 10, |_,_| 1);
+        // check size
+        assert_eq!(10, m.columns.len());
+        for i in 0..10 {
+            assert_eq!(10, m.columns[i].len());
+        }
+        let acc: i32 = (0..10)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .sum();
+        assert_eq!(100, acc);
+    }
+
+    #[test]
+    fn test_get() {
+        let m = Matrix::from_function(10, 10, |x,y| 10*x+y);
+        assert_eq!(&92, m.get(2,9));
+    }
+
+    #[test]
+    fn test_set() {
+        let mut m = Matrix::zero(10, 10);
+        m.set(3, 4, 1);
+        assert_eq!(m.columns[4][3], 1);
+    }
+
+    #[test]
+    fn test_set_segment() {
+        let mut m: Matrix<i32> = Matrix::zero(10, 10);
+        let t = Matrix::identity(3, 3);
+        m.set_segment(3, 3, t);
+
+        assert_eq!(m.columns[3][3], 1);
+        assert_eq!(m.columns[4][4], 1);
+        assert_eq!(m.columns[5][5], 1);
+        let acc: i32 = (0..10)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .sum();
+        assert_eq!(3, acc);
     }
 
 }
