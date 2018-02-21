@@ -1,156 +1,129 @@
-use std::ops::{Add, Deref, Index, IndexMut, Mul, Range, Sub};
+use std::ops;
 use std::iter::Sum;
 use std::clone::Clone;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq)]
 pub struct Vector<T> {
-    elements: Box<[T]>,
+    elements: Vec<Rc<T>>,
 }
 
 impl<T> Vector<T> {
     pub fn from_vec(elements: Vec<T>) -> Vector<T> {
-        Vector {
-            elements: elements.into_boxed_slice(),
-        }
+        let elements = elements.into_iter().map(Rc::new).collect();
+        Vector { elements: elements }
     }
 
     pub fn from(elements: Box<[T]>) -> Vector<T> {
-        Vector { elements }
+        Vector::from_vec(elements.into_vec())
+    }
+
+    pub fn repeat(n: usize, element: T) -> Vector<T> {
+        let element = Rc::new(element);
+        Vector {
+            elements: ((0..n).map(|_| element.clone()).collect()),
+        }
     }
 
     pub fn len(&self) -> usize {
         self.elements.len()
     }
+}
 
-    pub fn take(self) -> Box<[T]> {
-        self.elements
+impl<T> Clone for Vector<T> {
+    fn clone(&self) -> Self {
+        Vector {
+            elements: self.elements.iter().map(|e| e.clone()).collect(),
+        }
     }
 }
 
-impl<T> Deref for Vector<T> {
-    type Target = Box<[T]>;
-    fn deref(&self) -> &Box<[T]> {
-        &self.elements
-    }
-}
-
-impl<T> Index<usize> for Vector<T> {
+impl<T> ops::Index<usize> for Vector<T> {
     type Output = T;
 
     fn index(&self, idx: usize) -> &T {
-        &self.elements[idx]
+        &*self.elements[idx]
     }
 }
 
-impl<T> IndexMut<usize> for Vector<T> {
+impl<'a, T> ops::Index<ops::Range<usize>> for Vector<T> {
+    type Output = [Rc<T>];
+    fn index(&self, idxs: ops::Range<usize>) -> &Self::Output {
+        &self.elements[idxs]
+    }
+}
+
+impl<T: Clone> ops::IndexMut<usize> for Vector<T> {
     fn index_mut(&mut self, idx: usize) -> &mut T {
-        &mut self.elements[idx]
+        Rc::make_mut(&mut self.elements[idx])
     }
 }
 
-impl<T> Index<Range<usize>> for Vector<T> {
-    type Output = [T];
-    fn index(&self, idx: Range<usize>) -> &[T] {
-        &self.elements[idx]
-    }
-}
+macro_rules! binary_operator {
+    ($type:ident, $funcname:ident, $operator:tt) => {
+        impl<'a, T: ops::$type<Output = T>> ops::$type<&'a Vector<T>> for &'a Vector<T>
+            where &'a T: ops::$type<Output = T> 
+        {
+            type Output = Vector<T>;
 
-impl<'a, 'b, T: Add<Output = T> + Clone> Add<&'b Vector<T>> for &'a Vector<T> {
-    type Output = Vector<T>;
+            #[inline]
+            fn $funcname(self, other: &'a Vector<T>) -> Vector<T> {
+                assert_eq!(
+                    self.elements.len(),
+                    other.elements.len(),
+                    "Vectors should be of equal length"
+                );
 
-    #[inline]
-    fn add(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(
-            self.elements.len(),
-            other.elements.len(),
-            "Vectors should be of equal length"
-        );
+                let elements: Vec<Rc<T>> = self.elements
+                    .iter()
+                    .zip(other.elements.iter())
+                    .map(|(x, y)| {
+                        let x: &T = &*x;
+                        let y: &T = &*y;
+                        Rc::new(x $operator y)
+                    })
+                    .collect();
 
-        let elements: Vec<T> = self.elements
-            .iter()
-            .zip(other.elements.iter())
-            .map(|(x, y)| x.clone() + y.clone())
-            .collect();
+                Vector {
+                    elements: elements
+                }
+            }
+        }
 
-        Vector {
-            elements: elements.into_boxed_slice(),
+        impl<T: ops::$type<Output = T> + Copy> ops::$type<Vector<T>> for Vector<T> {
+            type Output = Vector<T>;
+
+            #[inline]
+            fn $funcname(self, other: Vector<T>) -> Vector<T> {
+                assert_eq!(
+                    self.elements.len(),
+                    other.elements.len(),
+                    "Vectors should be of equal length"
+                );
+
+                Vector {
+                    elements: self.elements
+                        .into_iter()
+                        .zip(other.elements)
+                        .map(|(x, y)| Rc::new(*x $operator *y))
+                        .collect()
+                }
+            }
         }
     }
 }
 
-impl<T: Add<Output = T>> Add<Vector<T>> for Vector<T> {
-    type Output = Vector<T>;
+binary_operator!(Add, add, +);
+binary_operator!(Sub, sub, -);
 
-    #[inline]
-    fn add(self, other: Vector<T>) -> Vector<T> {
-        assert_eq!(
-            self.elements.len(),
-            other.elements.len(),
-            "Vectors should be of equal length"
-        );
 
-        Vector {
-            elements: self.elements
-                .into_vec()
-                .into_iter()
-                .zip(other.elements.into_vec())
-                .map(|(x, y)| x + y)
-                .collect::<Vec<T>>()
-                .into_boxed_slice(),
-        }
-    }
-}
-
-impl<T: Sub<Output = T>> Sub<Vector<T>> for Vector<T> {
-    type Output = Vector<T>;
-
-    #[inline]
-    fn sub(self, other: Vector<T>) -> Vector<T> {
-        assert_eq!(
-            self.elements.len(),
-            other.elements.len(),
-            "Vectors should be of equal length"
-        );
-
-        Vector {
-            elements: self.elements
-                .into_vec()
-                .into_iter()
-                .zip(other.elements.into_vec())
-                .map(|(x, y)| x - y)
-                .collect::<Vec<T>>()
-                .into_boxed_slice(),
-        }
-    }
-}
-
-impl<'a, 'b, T: Sub<Output = T> + Clone> Sub<&'b Vector<T>> for &'a Vector<T> {
-    type Output = Vector<T>;
-
-    #[inline]
-    fn sub(self, other: &'b Vector<T>) -> Vector<T> {
-        assert_eq!(
-            self.elements.len(),
-            other.elements.len(),
-            "Vectors should be of equal length"
-        );
-
-        Vector {
-            elements: self.elements
-                .iter()
-                .zip(other.elements.iter())
-                .map(|(x, y)| x.clone() - y.clone())
-                .collect::<Vec<T>>()
-                .into_boxed_slice(),
-        }
-    }
-}
-
-impl<'a, 'b, T: Mul<Output = T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vector<T> {
+impl<'a, T: ops::Mul<Output = T> + Sum<T>> ops::Mul<&'a Vector<T>> for &'a Vector<T>
+    where &'a T: ops::Mul<Output = T>
+{
     type Output = T;
 
     #[inline]
-    fn mul(self, other: &'b Vector<T>) -> T {
+    fn mul(self, other: &'a Vector<T>) -> T {
         assert_eq!(
             self.elements.len(),
             other.elements.len(),
@@ -160,12 +133,17 @@ impl<'a, 'b, T: Mul<Output = T> + Sum<T> + Clone> Mul<&'b Vector<T>> for &'a Vec
         self.elements
             .iter()
             .zip(other.elements.iter())
-            .map(|(x, y)| x.clone() * y.clone())
+            .map(|(x, y)| {
+                let x: &T = &*x;
+                let y: &T = &*y;
+                x * y
+            })
             .sum()
     }
 }
 
-impl<T: Mul<Output = T> + Sum<T>> Mul<Vector<T>> for Vector<T> {
+impl<T: ops::Mul<Output = T> + Sum<T> + Copy> ops::Mul<Vector<T>> for Vector<T> 
+{
     type Output = T;
 
     #[inline]
@@ -177,10 +155,9 @@ impl<T: Mul<Output = T> + Sum<T>> Mul<Vector<T>> for Vector<T> {
         );
 
         self.elements
-            .into_vec()
             .into_iter()
-            .zip(other.elements.into_vec())
-            .map(|(x, y)| x * y)
+            .zip(other.elements)
+            .map(|(x, y)| *x * *y)
             .sum()
     }
 }
@@ -203,7 +180,11 @@ mod tests {
         let v1: Vector<i32> = Vector::from_vec(vec![0, 1, 2]);
         let v2: Vector<i32> = Vector::from_vec(vec![0, 1, 2]);
         let v3 = &v1 + &v2;
-        assert_eq!(*v3.elements, [0, 2, 4]);
+        let els: Vec<i32> = v3.elements.iter().map(|x| **x).collect();
+        assert_eq!(els, [0, 2, 4]);
+        let v3 = v1 + v2;
+        let els: Vec<i32> = v3.elements.iter().map(|x| **x).collect();
+        assert_eq!(els, [0, 2, 4]);
     }
 
     #[test]
@@ -211,7 +192,8 @@ mod tests {
         let v1: Vector<i32> = Vector::from_vec(vec![0, 1, 2]);
         let v2: Vector<i32> = Vector::from_vec(vec![0, 1, 2]);
         let v3 = &v1 - &v2;
-        assert_eq!(*v3.elements, [0, 0, 0]);
+        let els: Vec<i32> = v3.elements.iter().map(|x| **x).collect();
+        assert_eq!(els, [0, 0, 0]);
     }
 
     #[test]
@@ -245,7 +227,34 @@ mod tests {
     #[test]
     #[should_panic]
     fn get_index_out_of_bounds() {
-        Vector::from_vec(vec![1])[100];
+        &Vector::from_vec(vec![1])[100];
+    }
+
+    #[test]
+    fn test_assign_works() {
+        let mut vec = Vector::from_vec(vec![1, 2, 3]);
+        vec[1] = 4;
+        assert_eq!(vec[1], 4);
+    }
+
+    #[test]
+    fn test_repeat() {
+        let vec = Vector::repeat(3, 0);
+        let els: Vec<i32> = vec.elements.iter().map(|x| **x).collect();
+        assert_eq!(els, [0, 0, 0]);
+        assert_eq!(Rc::strong_count(&vec.elements[1]), 3);
+        assert!(Rc::ptr_eq(&vec.elements[0], &vec.elements[1]));
+        assert!(Rc::ptr_eq(&vec.elements[1], &vec.elements[2]));
+    }
+
+    #[test]
+    fn test_assign_respects_references() {
+        let mut vec = Vector::repeat(3, 0);
+        vec[1] = 4;
+        let els: Vec<i32> = vec.elements.iter().map(|x| **x).collect();
+        assert_eq!(els, [0, 4, 0]);
+        assert!(Rc::ptr_eq(&vec.elements[0], &vec.elements[2]));
+        assert!(!Rc::ptr_eq(&vec.elements[1], &vec.elements[2]));
     }
 
     fn get_two_vectors(size: usize) -> (Vector<usize>, Vector<usize>) {
