@@ -359,7 +359,7 @@ mod tests {
         get_test_with_accumulator!(-);
         let m1: Matrix<i32> = Matrix::zero(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
-        let m= _test(m1, m2, -10);
+        let m = _test(m1, m2, -10);
         assert_eq!(m.columns[0][0], -1);
 
         let m1 = Matrix::identity(10);
