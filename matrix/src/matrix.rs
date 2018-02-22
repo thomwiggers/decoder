@@ -305,7 +305,7 @@ mod tests {
         assert_eq!(3, acc);
     }
 
-    macro_rules! test_with_accumulator {
+    macro_rules! get_test_with_accumulator {
         ($operator: tt) => {
             fn _test(m1: Matrix<i32>, m2: Matrix<i32>, expected_sum: i32) -> Matrix<i32> {
                 let m = &m1 $operator &m2;
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_addition() {
-        test_with_accumulator!(+);
+        get_test_with_accumulator!(+);
 
         let m1: Matrix<i32> = Matrix::zero(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
@@ -339,8 +339,24 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
+    fn test_addition_different_col_size() {
+        let m1: Matrix<i32> = Matrix::zero(1, 3);
+        let m2: Matrix<i32> = Matrix::zero(1, 4);
+        m1 + m2;
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_addition_different_row_size() {
+        let m1: Matrix<i32> = Matrix::zero(2, 3);
+        let m2: Matrix<i32> = Matrix::zero(1, 3);
+        m1 + m2;
+    }
+
+    #[test]
     fn test_subtraction() {
-        test_with_accumulator!(-);
+        get_test_with_accumulator!(-);
         let m1: Matrix<i32> = Matrix::zero(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
         let m= _test(m1, m2, -10);
