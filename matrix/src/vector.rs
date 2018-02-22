@@ -25,13 +25,25 @@ impl<T> Vector<T> {
     pub fn len(&self) -> usize {
         self.elements.len()
     }
+
+    pub fn empty() -> Vector<T> {
+        Vector { elements: vec![] }
+    }
+
+    pub fn from_rc_vec(elements: Vec<Rc<T>>) -> Vector<T> {
+        Vector { elements }
+    }
 }
 
 impl<T> Clone for Vector<T> {
     fn clone(&self) -> Self {
         Vector {
-            elements: self.elements.iter().map(|e| e.clone()).collect(),
+            elements: self.elements.iter().cloned().collect(),
         }
+    }
+
+    fn clone_from(&mut self, other: &Self) {
+        self.elements = other.elements.clone()
     }
 }
 

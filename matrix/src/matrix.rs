@@ -1,7 +1,9 @@
 extern crate rand;
 extern crate zero_one;
 use vector::Vector;
+use std::rc::Rc;
 use self::zero_one::{One, Zero};
+use std::ops;
 
 use self::rand::Rand;
 
@@ -21,16 +23,11 @@ impl<T: Zero> Matrix<T> {
 }
 
 impl<T: Zero + One> Matrix<T> {
-    pub fn identity(rows: usize, columns: usize) -> Matrix<T> {
-        assert_eq!(
-            rows, columns,
-            "Rows needs to equal columns for Identity matrices"
-        );
-
-        let columns: Vec<Vector<T>> = (0..columns)
+    pub fn identity(size: usize) -> Matrix<T> {
+        let columns: Vec<Vector<T>> = (0..size)
             .map(|i| {
                 Vector::from_vec(
-                    (0..rows)
+                    (0..size)
                         .map(|j| if i == j { T::one() } else { T::zero() })
                         .collect(),
                 )
@@ -84,7 +81,7 @@ impl<T> Matrix<T> {
         &self.columns[col][row]
     }
 
-    pub fn get_segment(&self, row: usize, col: usize, rows: usize, cols: usize) -> Matrix<&T> {
+    pub fn get_segment(&self, row: usize, col: usize, rows: usize, cols: usize) -> Matrix<T> {
         assert!(
             row + rows < self.nrows(),
             "Index out of bounds: too many rows"
@@ -94,12 +91,12 @@ impl<T> Matrix<T> {
             "Index out of bounds: too many cols"
         );
 
-        let mut columns: Vec<Vector<&T>> = Vec::with_capacity(col + cols);
+        let mut columns: Vec<Vector<T>> = Vec::with_capacity(col + cols);
         for col in &self.columns[col..col + cols] {
             let rows = &col[row..row + rows];
-            let rows = rows.iter().map(|x| &**x).collect::<Vec<&T>>();
+            let rows = rows.iter().cloned().collect::<Vec<Rc<T>>>();
 
-            columns.push(Vector::from_vec(rows));
+            columns.push(Vector::from_rc_vec(rows));
         }
 
         Matrix { columns }
@@ -136,6 +133,48 @@ impl<T: Copy> Matrix<T> {
         }
     }
 }
+
+macro_rules! pointwise_operator {
+    ($type:ident, $funcname:ident, $operator:tt) => {
+        impl<T> ops::$type for Matrix<T>
+            where Vector<T>: ops::$type<Output=Vector<T>>
+        {
+            type Output = Matrix<T>;
+
+            fn $funcname(self, other: Matrix<T>) -> Self::Output {
+                debug_assert_eq!(self.ncols(), other.nrows(),
+                            "they should have the same number of columns");
+                let columns: Vec<Vector<T>> = self.columns
+                    .into_iter()
+                    .zip(other.columns)
+                    .map(|(a, b)| a $operator b)
+                    .collect::<Vec<Vector<T>>>();
+
+                Matrix { columns }
+            }
+        }
+
+        impl<'a, T> ops::$type for &'a Matrix<T>
+            where Vector<T>: ops::$type<Output=Vector<T>>
+        {
+            type Output = Matrix<T>;
+
+            fn $funcname(self, other: &Matrix<T>) -> Self::Output {
+                let columns: Vec<Vector<T>> = self.columns
+                    .iter()
+                    .zip(other.columns.iter())
+                    .map(|(a, b)| a.clone() $operator b.clone())
+                    .collect::<Vec<Vector<T>>>();
+
+                Matrix { columns }
+            }
+        }
+
+    }
+}
+
+pointwise_operator!(Add, add, +);
+pointwise_operator!(Sub, sub, -);
 
 #[cfg(test)]
 mod tests {
@@ -180,7 +219,7 @@ mod tests {
 
     #[test]
     fn identity() {
-        let m: Matrix<i32> = Matrix::identity(10, 10);
+        let m: Matrix<i32> = Matrix::identity(10);
         // check size
         assert_eq!(10, m.columns.len());
         for i in 0..10 {
@@ -240,9 +279,21 @@ mod tests {
     }
 
     #[test]
+    fn test_get_segment() {
+        let m: Matrix<i32> = Matrix::identity(10);
+        let m3 = m.get_segment(0, 0, 3, 3);
+        assert_eq!(m3.nrows(), 3);
+        assert_eq!(m3.ncols(), 3);
+        let acc: i32 = (0..3)
+            .map(|i| (0..3).map(|j| m.columns[i][j]).sum(): i32)
+            .sum();
+        assert_eq!(3, acc);
+    }
+
+    #[test]
     fn test_set_segment() {
         let mut m: Matrix<i32> = Matrix::zero(10, 10);
-        let t = Matrix::identity(3, 3);
+        let t = Matrix::identity(3);
         m.set_segment(3, 3, t);
 
         assert_eq!(m.columns[3][3], 1);
@@ -252,6 +303,16 @@ mod tests {
             .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
             .sum();
         assert_eq!(3, acc);
+    }
+
+    #[test]
+    fn test_addition() {
+        panic!("Not yet implemented!");
+    }
+
+    #[test]
+    fn test_subtraction() {
+        panic!("Not yet implemented!");
     }
 
 }
