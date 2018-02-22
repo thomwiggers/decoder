@@ -305,14 +305,51 @@ mod tests {
         assert_eq!(3, acc);
     }
 
+    macro_rules! test_with_accumulator {
+        ($operator: tt) => {
+            fn _test(m1: Matrix<i32>, m2: Matrix<i32>, expected_sum: i32) -> Matrix<i32> {
+                let m = &m1 $operator &m2;
+                let acc: i32 = (0..10)
+                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+                    .sum();
+                assert_eq!(expected_sum, acc);
+
+                let m = m1 $operator m2;
+                let acc: i32 = (0..10)
+                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+                    .sum();
+                assert_eq!(expected_sum, acc);
+                m
+            }
+        }
+    }
+
     #[test]
     fn test_addition() {
-        panic!("Not yet implemented!");
+        test_with_accumulator!(+);
+
+        let m1: Matrix<i32> = Matrix::zero(10, 10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        _test(m1, m2, 10);
+
+        let m1 = Matrix::identity(10);
+        let m2 = Matrix::identity(10);
+        let m = _test(m1, m2, 20);
+        assert_eq!(m.columns[0][0], 2);
     }
 
     #[test]
     fn test_subtraction() {
-        panic!("Not yet implemented!");
+        test_with_accumulator!(-);
+        let m1: Matrix<i32> = Matrix::zero(10, 10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        let m= _test(m1, m2, -10);
+        assert_eq!(m.columns[0][0], -1);
+
+        let m1 = Matrix::identity(10);
+        let m2 = Matrix::identity(10);
+        let m = _test(m1, m2, 0);
+        assert_eq!(m.columns[0][0], 0);
     }
 
 }
