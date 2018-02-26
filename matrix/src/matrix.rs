@@ -1,7 +1,6 @@
 extern crate rand;
 extern crate zero_one;
 use vector::Vector;
-use std::rc::Rc;
 use self::zero_one::{One, Zero};
 use std::ops;
 
@@ -48,7 +47,7 @@ impl<T> Matrix<T> {
     pub fn from_vec(columns: Vec<Vector<T>>) -> Matrix<T> {
         if !columns.is_empty() {
             let len_first = columns[0].len();
-            for col in columns.iter() {
+            for col in &columns {
                 assert_eq!(len_first, col.len(), "All columns must be the same length");
             }
         }
@@ -94,7 +93,7 @@ impl<T> Matrix<T> {
         let mut columns: Vec<Vector<T>> = Vec::with_capacity(col + cols);
         for col in &self.columns[col..col + cols] {
             let rows = &col[row..row + rows];
-            let rows = rows.iter().cloned().collect::<Vec<Rc<T>>>();
+            let rows = rows.to_vec();
 
             columns.push(Vector::from_rc_vec(rows));
         }

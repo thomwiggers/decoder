@@ -26,6 +26,10 @@ impl<T> Vector<T> {
         self.elements.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty()
+    }
+
     pub fn empty() -> Vector<T> {
         Vector { elements: vec![] }
     }
@@ -38,7 +42,7 @@ impl<T> Vector<T> {
 impl<T> Clone for Vector<T> {
     fn clone(&self) -> Self {
         Vector {
-            elements: self.elements.iter().cloned().collect(),
+            elements: self.elements.to_vec()
         }
     }
 
