@@ -147,7 +147,7 @@ macro_rules! pointwise_operator {
                     .into_iter()
                     .zip(other.columns)
                     .map(|(a, b)| a $operator b)
-                    .collect::<Vec<Vector<T>>>();
+                    .collect();
 
                 Matrix { columns }
             }
@@ -161,9 +161,10 @@ macro_rules! pointwise_operator {
             fn $funcname(self, other: &Matrix<T>) -> Self::Output {
                 let columns: Vec<Vector<T>> = self.columns
                     .iter()
-                    .zip(other.columns.iter())
-                    .map(|(a, b)| a.clone() $operator b.clone())
-                    .collect::<Vec<Vector<T>>>();
+                    .cloned()
+                    .zip(other.columns.to_vec())
+                    .map(|(a, b)| a $operator b)
+                    .collect();
 
                 Matrix { columns }
             }
@@ -193,13 +194,9 @@ where
     }
 }
 
-impl<'a, T> ops::Mul<Matrix<T>> for Vector<T>
+impl<T> ops::Mul<Matrix<T>> for Vector<T>
 where
-    Vector<T>: ops::Mul<Output = T>, /*
-    where &'a Vector<T>: ops::Mul<&'a Matrix<T>>,
-          &'a Vector<T>: ops::Mul<Output=T>,
-          Vector<T>: 'a,
-*/
+    for<'a> &'a Vector<T>: ops::Mul<&'a Matrix<T>, Output = Vector<T>>,
 {
     type Output = Vector<T>;
 
@@ -209,21 +206,33 @@ where
             other.nrows(),
             "The length of vector should match the number of matrix rows"
         );
-        let result: Vec<T> = other
-            .columns
-            .into_iter()
-            .map(|c| self.clone() * c)
-            .collect();
 
-        Vector::from_vec(result)
-        //&self * &other;
+        &self * &other
+    }
+}
+
+impl<'a, T> ops::Mul<&'a Matrix<T>> for &'a Matrix<T>
+where
+    &'a Vector<T>: ops::Mul<&'a Matrix<T>, Output = Vector<T>>,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, other: &'a Matrix<T>) -> Self::Output {
+        debug_assert_eq!(
+            self.ncols(),
+            other.nrows(),
+            "The number of columns should match the number of rows"
+        );
+
+        let columns: Vec<Vector<T>> = self.columns.iter().map(|c| c * other).collect();
+
+        Matrix { columns }
     }
 }
 
 impl<T> ops::Mul<Matrix<T>> for Matrix<T>
 where
-    Matrix<T>: Clone,
-    Vector<T>: ops::Mul<Matrix<T>, Output = Vector<T>>,
+    for<'a> &'a Vector<T>: ops::Mul<&'a Matrix<T>, Output = Vector<T>>,
 {
     type Output = Matrix<T>;
 
@@ -233,10 +242,7 @@ where
             other.nrows(),
             "The number of columns should match the number of rows"
         );
-        let columns: Vec<Vector<T>> = self.columns
-            .into_iter()
-            .map(|c| c * other.clone())
-            .collect();
+        let columns: Vec<Vector<T>> = self.columns.into_iter().map(|c| &c * &other).collect();
         Matrix { columns }
     }
 }
@@ -486,6 +492,18 @@ mod tests {
         let m1: Matrix<i32> = Matrix::random(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
         let m = m1.clone() * m2;
+        for i in 0..10 {
+            for j in 0..10 {
+                assert_eq!(m.columns[i][j], m1.columns[i][j]);
+            }
+        }
+    }
+
+    #[test]
+    fn test_matrix_mul_reference() {
+        let m1: Matrix<i32> = Matrix::random(10, 10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        let m = &m1 * &m2;
         for i in 0..10 {
             for j in 0..10 {
                 assert_eq!(m.columns[i][j], m1.columns[i][j]);
