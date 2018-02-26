@@ -42,7 +42,7 @@ impl<T> Vector<T> {
 impl<T> Clone for Vector<T> {
     fn clone(&self) -> Self {
         Vector {
-            elements: self.elements.to_vec()
+            elements: self.elements.to_vec(),
         }
     }
 
