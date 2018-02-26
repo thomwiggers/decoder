@@ -482,4 +482,15 @@ mod tests {
         }
     }
 
+    #[test]
+    fn test_matrix_mul_no_reference() {
+        let m1: Matrix<i32> = Matrix::random(10, 10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        let m = m1.clone() * m2;
+        for i in 0..10 {
+            for j in 0..10 {
+                assert_eq!(m.columns[i][j], m1.columns[i][j]);
+            }
+        }
+    }
 }
