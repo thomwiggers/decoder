@@ -176,6 +176,51 @@ macro_rules! pointwise_operator {
 pointwise_operator!(Add, add, +);
 pointwise_operator!(Sub, sub, -);
 
+impl<'a, T> ops::Mul<&'a Matrix<T>> for &'a Vector<T>
+where
+    &'a Vector<T>: ops::Mul<Output = T>,
+{
+    type Output = Vector<T>;
+
+    fn mul(self, other: &'a Matrix<T>) -> Self::Output {
+        debug_assert_eq!(
+            self.len(),
+            other.nrows(),
+            "The number of columns should match the number of rows"
+        );
+        let result: Vec<T> = other.columns.iter().map(|c| self * c).collect();
+
+        Vector::from_vec(result)
+    }
+}
+
+impl<'a, T> ops::Mul<Matrix<T>> for Vector<T>
+where
+    Vector<T>: ops::Mul<Output = T>, /*
+    where &'a Vector<T>: ops::Mul<&'a Matrix<T>>,
+          &'a Vector<T>: ops::Mul<Output=T>,
+          Vector<T>: 'a,
+*/
+{
+    type Output = Vector<T>;
+
+    fn mul(self, other: Matrix<T>) -> Self::Output {
+        debug_assert_eq!(
+            self.len(),
+            other.nrows(),
+            "The number of columns should match the number of rows"
+        );
+        let result: Vec<T> = other
+            .columns
+            .into_iter()
+            .map(|c| self.clone() * c)
+            .collect();
+
+        Vector::from_vec(result)
+        //&self * &other;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -366,6 +411,54 @@ mod tests {
         let m2 = Matrix::identity(10);
         let m = _test(m1, m2, 0);
         assert_eq!(m.columns[0][0], 0);
+    }
+
+    #[test]
+    fn test_vector_mul_reference() {
+        let v: Vector<i32> = Vector::repeat(10, 1);
+        let m: Matrix<i32> = Matrix::identity(10);
+
+        let result: Vector<i32> = &v * &m;
+
+        assert_eq!(result.len(), 10);
+        assert_eq!(result[0], 1, "Position 0 should be 1");
+        for i in 1..10 {
+            assert_eq!(result[i], 1, "Position {} should be 0", i);
+        }
+
+        let v = Vector::repeat(10, 1);
+        let mut m = Matrix::zero(10, 10);
+        m.columns[0][1] = 1;
+        let result = &v * &m;
+        assert_eq!(result.len(), 10);
+        assert_eq!(result[0], 1, "Position 0 should be 1");
+        for i in 1..10 {
+            assert_eq!(result[i], 0, "Position {} should be 0", i);
+        }
+    }
+
+    #[test]
+    fn test_vector_mul_no_reference() {
+        let v: Vector<i32> = Vector::repeat(10, 1);
+        let m: Matrix<i32> = Matrix::identity(10);
+
+        let result: Vector<i32> = &v * &m;
+
+        assert_eq!(result.len(), 10);
+        assert_eq!(result[0], 1, "Position 0 should be 1");
+        for i in 1..10 {
+            assert_eq!(result[i], 1, "Position {} should be 0", i);
+        }
+
+        let v = Vector::repeat(10, 1);
+        let mut m = Matrix::zero(10, 10);
+        m.columns[0][1] = 1;
+        let result = &v * &m;
+        assert_eq!(result.len(), 10);
+        assert_eq!(result[0], 1, "Position 0 should be 1");
+        for i in 1..10 {
+            assert_eq!(result[i], 0, "Position {} should be 0", i);
+        }
     }
 
 }
