@@ -7,7 +7,7 @@ use std::ops;
 
 use self::rand::Rand;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Matrix<T> {
     columns: Vec<Vector<T>>,
 }
@@ -208,7 +208,7 @@ where
         debug_assert_eq!(
             self.len(),
             other.nrows(),
-            "The number of columns should match the number of rows"
+            "The length of vector should match the number of matrix rows"
         );
         let result: Vec<T> = other
             .columns
@@ -218,6 +218,27 @@ where
 
         Vector::from_vec(result)
         //&self * &other;
+    }
+}
+
+impl<T> ops::Mul<Matrix<T>> for Matrix<T>
+where
+    Matrix<T>: Clone,
+    Vector<T>: ops::Mul<Matrix<T>, Output = Vector<T>>,
+{
+    type Output = Matrix<T>;
+
+    fn mul(self, other: Matrix<T>) -> Self::Output {
+        debug_assert_eq!(
+            self.ncols(),
+            other.nrows(),
+            "The number of columns should match the number of rows"
+        );
+        let columns: Vec<Vector<T>> = self.columns
+            .into_iter()
+            .map(|c| c * other.clone())
+            .collect();
+        Matrix { columns }
     }
 }
 
