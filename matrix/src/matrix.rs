@@ -102,6 +102,15 @@ impl<T> Matrix<T> {
         Matrix { columns }
     }
 
+    pub fn augment(&mut self, other: Matrix<T>) {
+        assert_eq!(
+            self.nrows(),
+            other.nrows(),
+            "they should have the same number of rows"
+        );
+        self.columns.extend(other.columns.into_iter());
+    }
+
     pub fn transpose(&self) -> Matrix<T> {
         let cols = self.ncols();
         let rows = self.nrows();
@@ -109,8 +118,8 @@ impl<T> Matrix<T> {
         for _i in 0..rows {
             new_columns.push(Vec::with_capacity(cols));
         }
-        for j in 0..cols {
-            let prior = self.columns[j].clone().into_iter().enumerate();
+        for column in &self.columns {
+            let prior = column.clone().into_iter().enumerate();
             for (i, e) in prior {
                 new_columns[i].push(e);
             }
@@ -555,6 +564,42 @@ mod tests {
                 assert_eq!(m1t.columns[i][j], m1.columns[j][i]);
             }
         }
+    }
+
+    #[test]
+    fn augment() {
+        let mut m1: Matrix<i32> = Matrix::identity(10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        m1.augment(m2.clone());
+        assert_eq!(m1.nrows(), m2.nrows());
+        assert_eq!(m1.ncols(), 20);
+
+        for i in 0..10 {
+            for j in 0..10 {
+                let expected = if i == j { 1 } else { 0 };
+                assert_eq!(
+                    m1.columns[i][j], expected,
+                    "on position ({},{}) there should be a {}",
+                    i, j, expected
+                );
+                assert_eq!(
+                    m1.columns[i + 10][j],
+                    expected,
+                    "on position ({},{}) there should be a {}",
+                    i + 10,
+                    j,
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn augment_unequal_sizes() {
+        let mut m1: Matrix<i32> = Matrix::identity(10);
+        let m2: Matrix<i32> = Matrix::identity(5);
+        m1.augment(m2.clone());
     }
 
 }
