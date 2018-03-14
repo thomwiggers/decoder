@@ -3,6 +3,7 @@ extern crate zero_one;
 use vector::Vector;
 use self::zero_one::{One, Zero};
 use std::ops;
+use std::rc::Rc;
 
 use self::rand::Rand;
 
@@ -99,6 +100,22 @@ impl<T> Matrix<T> {
         }
 
         Matrix { columns }
+    }
+
+    pub fn transpose(&self) -> Matrix<T> {
+        let cols = self.ncols();
+        let rows = self.nrows();
+        let mut new_columns: Vec<Vec<Rc<T>>> = Vec::with_capacity(rows);
+        for _i in 0..rows {
+            new_columns.push(Vec::with_capacity(cols));
+        }
+        for j in 0..cols {
+            let prior = self.columns[j].clone().into_iter().enumerate();
+            for (i, e) in prior {
+                new_columns[i].push(e);
+            }
+        }
+        Matrix { columns: new_columns.into_iter().map(Vector::from_rc_vec).collect() }
     }
 }
 
@@ -510,4 +527,33 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_matrix_transpose() {
+        let m1: Matrix<i32> = Matrix::identity(10);
+        let m2: Matrix<i32> = m1.transpose();
+        assert_eq!(m1.nrows(), m2.ncols());
+        assert_eq!(m1.ncols(), m2.nrows());
+
+        for i in 0..10 {
+            for j in 0..10 {
+                assert_eq!(m1.columns[i][j], m2.columns[i][j]);
+            }
+        }
+
+        let m1: Matrix<i32> = Matrix::from_vec(
+            vec![
+                Vector::from_vec(vec![1,1,1]),
+                Vector::from_vec(vec![0,0,0]),
+            ]);
+        let m1t = m1.transpose();
+        assert_eq!(m1.nrows(), m1t.ncols());
+        assert_eq!(m1.ncols(), m1t.nrows());
+        for i in 0..3 {
+            for j in 0..2 {
+                assert_eq!(m1t.columns[i][j], m1.columns[j][i]);
+            }
+        }
+    }
+
 }
