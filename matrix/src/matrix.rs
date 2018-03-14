@@ -115,7 +115,9 @@ impl<T> Matrix<T> {
                 new_columns[i].push(e);
             }
         }
-        Matrix { columns: new_columns.into_iter().map(Vector::from_rc_vec).collect() }
+        Matrix {
+            columns: new_columns.into_iter().map(Vector::from_rc_vec).collect(),
+        }
     }
 }
 
@@ -541,11 +543,10 @@ mod tests {
             }
         }
 
-        let m1: Matrix<i32> = Matrix::from_vec(
-            vec![
-                Vector::from_vec(vec![1,1,1]),
-                Vector::from_vec(vec![0,0,0]),
-            ]);
+        let m1: Matrix<i32> = Matrix::from_vec(vec![
+            Vector::from_vec(vec![1, 1, 1]),
+            Vector::from_vec(vec![0, 0, 0]),
+        ]);
         let m1t = m1.transpose();
         assert_eq!(m1.nrows(), m1t.ncols());
         assert_eq!(m1.ncols(), m1t.nrows());
