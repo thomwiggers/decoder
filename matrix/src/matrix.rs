@@ -102,6 +102,7 @@ impl<T> Matrix<T> {
         Matrix { columns }
     }
 
+    // Glue the other matrix to the right of this matrix
     pub fn augment(&mut self, other: Matrix<T>) {
         assert_eq!(
             self.nrows(),
@@ -111,6 +112,19 @@ impl<T> Matrix<T> {
         self.columns.extend(other.columns.into_iter());
     }
 
+    // Put the other matrix below this matrix.
+    pub fn stack(&mut self, other: Matrix<T>) {
+        assert_eq!(
+            self.ncols(),
+            other.ncols(),
+            "they should have the same number of columns"
+        );
+        for (i, col) in other.columns.into_iter().enumerate() {
+            self.columns[i].extend(col.into_iter());
+        }
+    }
+
+    // compute the transpose
     pub fn transpose(&self) -> Matrix<T> {
         let cols = self.ncols();
         let rows = self.nrows();
@@ -602,4 +616,39 @@ mod tests {
         m1.augment(m2.clone());
     }
 
+    #[test]
+    fn stack() {
+        let mut m1: Matrix<i32> = Matrix::identity(10);
+        let m2: Matrix<i32> = Matrix::identity(10);
+        m1.stack(m2.clone());
+        assert_eq!(m1.ncols(), m2.ncols());
+        assert_eq!(m1.nrows(), 20);
+
+        for i in 0..10 {
+            for j in 0..10 {
+                let expected = if i == j { 1 } else { 0 };
+                assert_eq!(
+                    m1.columns[i][j], expected,
+                    "on position ({},{}) there should be a {}",
+                    i, j, expected
+                );
+                assert_eq!(
+                    m1.columns[i][j + 10],
+                    expected,
+                    "on position ({},{}) there should be a {}",
+                    i,
+                    j + 10,
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn stack_unequal_sizes() {
+        let mut m1: Matrix<i32> = Matrix::identity(10);
+        let m2: Matrix<i32> = Matrix::identity(5);
+        m1.stack(m2.clone());
+    }
 }

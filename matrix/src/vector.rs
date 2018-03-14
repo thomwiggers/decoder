@@ -81,6 +81,12 @@ impl<T: Clone> ops::IndexMut<usize> for Vector<T> {
     }
 }
 
+impl<T> iter::Extend<Rc<T>> for Vector<T> {
+    fn extend<A: IntoIterator<Item=Rc<T>>>(&mut self, iter: A) {
+        self.elements.extend(iter);
+    }
+}
+
 macro_rules! binary_operator {
     ($type:ident, $funcname:ident, $operator:tt) => {
         impl<'a, T: ops::$type<Output = T>> ops::$type<&'a Vector<T>> for &'a Vector<T>
