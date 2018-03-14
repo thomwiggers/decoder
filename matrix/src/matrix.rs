@@ -308,14 +308,14 @@ mod tests {
     }
 
     #[test]
-    fn test_from_vec() {
+    fn from_vec() {
         let m = Matrix::from_vec(vec![Vector::from_vec(vec![1])]);
         assert_eq!(m.nrows(), 1);
         assert_eq!(m.ncols(), 1);
     }
 
     #[test]
-    fn test_random() {
+    fn random() {
         let m: Matrix<i32> = Matrix::random(9, 10);
         assert_eq!(m.nrows(), 9);
         assert_eq!(m.ncols(), 10);
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_from_unequal_length() {
+    fn from_unequal_length() {
         Matrix::from_vec(vec![
             Vector::from_vec(vec![1]),
             Vector::from_vec(vec![1, 2]),
@@ -365,7 +365,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_function() {
+    fn from_function() {
         let m = Matrix::from_function(10, 10, |_, _| 1);
         // check size
         assert_eq!(10, m.columns.len());
@@ -379,20 +379,20 @@ mod tests {
     }
 
     #[test]
-    fn test_get() {
+    fn get() {
         let m = Matrix::from_function(10, 10, |x, y| 10 * x + y);
         assert_eq!(&92, m.get(2, 9));
     }
 
     #[test]
-    fn test_set() {
+    fn set() {
         let mut m = Matrix::zero(10, 10);
         m.set(3, 4, 1);
         assert_eq!(m.columns[4][3], 1);
     }
 
     #[test]
-    fn test_get_segment() {
+    fn get_segment() {
         let m: Matrix<i32> = Matrix::identity(10);
         let m3 = m.get_segment(0, 0, 3, 3);
         assert_eq!(m3.nrows(), 3);
@@ -404,7 +404,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_segment() {
+    fn set_segment() {
         let mut m: Matrix<i32> = Matrix::zero(10, 10);
         let t = Matrix::identity(3);
         m.set_segment(3, 3, t);
@@ -438,7 +438,7 @@ mod tests {
     }
 
     #[test]
-    fn test_addition() {
+    fn addition() {
         get_test_with_accumulator!(+);
 
         let m1: Matrix<i32> = Matrix::zero(10, 10);
@@ -453,7 +453,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_addition_different_col_size() {
+    fn addition_different_col_size() {
         let m1: Matrix<i32> = Matrix::zero(1, 3);
         let m2: Matrix<i32> = Matrix::zero(1, 4);
         m1 + m2;
@@ -461,14 +461,14 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_addition_different_row_size() {
+    fn addition_different_row_size() {
         let m1: Matrix<i32> = Matrix::zero(2, 3);
         let m2: Matrix<i32> = Matrix::zero(1, 3);
         m1 + m2;
     }
 
     #[test]
-    fn test_subtraction() {
+    fn subtraction() {
         get_test_with_accumulator!(-);
         let m1: Matrix<i32> = Matrix::zero(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
@@ -482,7 +482,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_mul_reference() {
+    fn vector_mul_reference() {
         let v: Vector<i32> = Vector::repeat(10, 1);
         let m: Matrix<i32> = Matrix::identity(10);
 
@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vector_mul_no_reference() {
+    fn vector_mul_no_reference() {
         let v: Vector<i32> = Vector::repeat(10, 1);
         let m: Matrix<i32> = Matrix::identity(10);
 
@@ -530,7 +530,7 @@ mod tests {
     }
 
     #[test]
-    fn test_matrix_mul_no_reference() {
+    fn matrix_mul_no_reference() {
         let m1: Matrix<i32> = Matrix::random(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
         let m = m1.clone() * m2;
@@ -542,7 +542,7 @@ mod tests {
     }
 
     #[test]
-    fn test_matrix_mul_reference() {
+    fn matrix_mul_reference() {
         let m1: Matrix<i32> = Matrix::random(10, 10);
         let m2: Matrix<i32> = Matrix::identity(10);
         let m = &m1 * &m2;
@@ -554,7 +554,7 @@ mod tests {
     }
 
     #[test]
-    fn test_matrix_transpose() {
+    fn matrix_transpose() {
         let m1: Matrix<i32> = Matrix::identity(10);
         let m2: Matrix<i32> = m1.transpose();
         assert_eq!(m1.nrows(), m2.ncols());
