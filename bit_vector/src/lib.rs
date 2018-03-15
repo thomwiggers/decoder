@@ -87,6 +87,7 @@ macro_rules! tests_for_type {
         #[cfg(test)]
         mod $name {
             use super::Bit;
+            use zero_one::*;
 
             const ZERO: $type = $zero;
             const ONE: $type = $one;
