@@ -13,17 +13,22 @@ pub struct Bit<T> {
     value: T,
 }
 
-impl<T: Zero + One> Bit<T> {
-    pub fn zero() -> Bit<T> {
+impl<T: Zero> Zero for Bit<T> {
+    #[inline]
+    fn zero() -> Bit<T> {
         Bit { value: T::zero() }
     }
+}
 
-    pub fn one() -> Bit<T> {
+impl<T: One> One for Bit<T> {
+    #[inline]
+    fn one() -> Bit<T> {
         Bit { value: T::one() }
     }
 }
 
 impl<T> Bit<T> {
+    #[inline]
     pub fn from(value: T) -> Bit<T> {
         Bit { value }
     }
@@ -38,18 +43,21 @@ impl<T: BitXor<Output = T>> Add for Bit<T> {
 }
 
 impl<T: BitXorAssign<T>> BitXorAssign for Bit<T> {
+    #[inline]
     fn bitxor_assign(&mut self, other: Bit<T>) {
         self.value ^= other.value
     }
 }
 
 impl<T: BitXorAssign<T>> AddAssign for Bit<T> {
+    #[inline]
     fn add_assign(&mut self, other: Bit<T>) {
         *self ^= other
     }
 }
 
 impl<T: BitXorAssign<T>> SubAssign for Bit<T> {
+    #[inline]
     fn sub_assign(&mut self, other: Bit<T>) {
         *self ^= other
     }
