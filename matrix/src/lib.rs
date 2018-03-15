@@ -1,8 +1,3 @@
-#![feature(toowned_clone_into)]
-#![feature(type_ascription)]
-#![feature(test)]
-extern crate test;
-
 mod vector;
 mod matrix;
 

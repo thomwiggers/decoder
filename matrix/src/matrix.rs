@@ -343,7 +343,7 @@ mod tests {
 
         // doesn't work without :i32
         let acc: i32 = (0..10)
-            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
             .sum();
         assert_eq!(10, acc);
     }
@@ -359,7 +359,7 @@ mod tests {
 
         // doesn't work without :i32
         let acc: i32 = (0..10)
-            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
             .sum();
         assert_eq!(0, acc);
     }
@@ -373,7 +373,7 @@ mod tests {
             assert_eq!(10, m.columns[i].len());
         }
         let acc: i32 = (0..10)
-            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
             .sum();
         assert_eq!(100, acc);
     }
@@ -398,7 +398,7 @@ mod tests {
         assert_eq!(m3.nrows(), 3);
         assert_eq!(m3.ncols(), 3);
         let acc: i32 = (0..3)
-            .map(|i| (0..3).map(|j| m.columns[i][j]).sum(): i32)
+            .map(|i| (0..3).map(|j| m.columns[i][j]).sum::<i32>())
             .sum();
         assert_eq!(3, acc);
     }
@@ -413,7 +413,7 @@ mod tests {
         assert_eq!(m.columns[4][4], 1);
         assert_eq!(m.columns[5][5], 1);
         let acc: i32 = (0..10)
-            .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+            .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
             .sum();
         assert_eq!(3, acc);
     }
@@ -423,13 +423,13 @@ mod tests {
             fn _test(m1: Matrix<i32>, m2: Matrix<i32>, expected_sum: i32) -> Matrix<i32> {
                 let m = &m1 $operator &m2;
                 let acc: i32 = (0..10)
-                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
                     .sum();
                 assert_eq!(expected_sum, acc);
 
                 let m = m1 $operator m2;
                 let acc: i32 = (0..10)
-                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum(): i32)
+                    .map(|i| (0..10).map(|j| m.columns[i][j]).sum::<i32>())
                     .sum();
                 assert_eq!(expected_sum, acc);
                 m
