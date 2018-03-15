@@ -82,7 +82,7 @@ impl<T: Clone> ops::IndexMut<usize> for Vector<T> {
 }
 
 impl<T> iter::Extend<Rc<T>> for Vector<T> {
-    fn extend<A: IntoIterator<Item=Rc<T>>>(&mut self, iter: A) {
+    fn extend<A: IntoIterator<Item = Rc<T>>>(&mut self, iter: A) {
         self.elements.extend(iter);
     }
 }
