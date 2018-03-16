@@ -261,8 +261,8 @@ where
 
 impl<'a, T> ops::Mul<&'a Matrix<T>> for &'a Matrix<T>
 where
-    for<'b> &'b T: ops::Mul<Output=T>,
-    T: ops::Add<Output=T> + Zero
+    for<'b> &'b T: ops::Mul<Output = T>,
+    T: ops::Add<Output = T> + Zero,
 {
     type Output = Matrix<T>;
 
@@ -275,7 +275,6 @@ where
         let k = self.ncols();
         let m = self.nrows();
         let n = other.ncols();
-
 
         let mut columns: Vec<Vec<Rc<T>>> = Vec::with_capacity(m);
         for _ in 0..n {
@@ -293,7 +292,9 @@ where
             }
         }
 
-        Matrix { columns: columns.into_iter().map(Vector::from_rc_vec).collect() }
+        Matrix {
+            columns: columns.into_iter().map(Vector::from_rc_vec).collect(),
+        }
     }
 }
 
