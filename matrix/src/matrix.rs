@@ -261,7 +261,8 @@ where
 
 impl<'a, T> ops::Mul<&'a Matrix<T>> for &'a Matrix<T>
 where
-    &'a Vector<T>: ops::Mul<&'a Matrix<T>, Output = Vector<T>>,
+    for<'b> &'b T: ops::Mul<Output=T>,
+    T: ops::Add<Output=T> + Zero
 {
     type Output = Matrix<T>;
 
@@ -271,16 +272,34 @@ where
             other.nrows(),
             "The number of columns should match the number of rows"
         );
+        let k = self.ncols();
+        let m = self.nrows();
+        let n = other.ncols();
 
-        let columns: Vec<Vector<T>> = self.columns.iter().map(|c| c * other).collect();
 
-        Matrix { columns }
+        let mut columns: Vec<Vec<Rc<T>>> = Vec::with_capacity(m);
+        for _ in 0..n {
+            columns.push(Vec::with_capacity(m));
+        }
+
+        for i in 0..m {
+            for j in 0..n {
+                let col = &mut columns[j];
+                let mut sum = T::zero();
+                for l in 0..k {
+                    sum = sum + &self[l][i] * &other[j][l];
+                }
+                col.push(Rc::new(sum));
+            }
+        }
+
+        Matrix { columns: columns.into_iter().map(Vector::from_rc_vec).collect() }
     }
 }
 
 impl<T> ops::Mul<Matrix<T>> for Matrix<T>
 where
-    for<'a> &'a Vector<T>: ops::Mul<&'a Matrix<T>, Output = Vector<T>>,
+    for<'a> &'a Matrix<T>: ops::Mul<Output = Matrix<T>>,
 {
     type Output = Matrix<T>;
 
@@ -290,8 +309,7 @@ where
             other.nrows(),
             "The number of columns should match the number of rows"
         );
-        let columns: Vec<Vector<T>> = self.columns.into_iter().map(|c| &c * &other).collect();
-        Matrix { columns }
+        &self * &other
     }
 }
 
