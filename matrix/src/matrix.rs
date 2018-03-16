@@ -44,6 +44,22 @@ impl<T: Rand> Matrix<T> {
     }
 }
 
+impl<T> ops::Index<usize> for Matrix<T> {
+    type Output = Vector<T>;
+
+    #[inline]
+    fn index(&self, idx: usize) -> &Self::Output {
+        &self.columns[idx]
+    }
+}
+
+impl<T> ops::IndexMut<usize> for Matrix<T> {
+    #[inline]
+    fn index_mut(&mut self, idx: usize) -> &mut Vector<T> {
+        &mut self.columns[idx]
+    }
+}
+
 impl<T> Matrix<T> {
     pub fn from_vec(columns: Vec<Vector<T>>) -> Matrix<T> {
         if !columns.is_empty() {
@@ -77,10 +93,7 @@ impl<T> Matrix<T> {
         self.columns[0].len()
     }
 
-    pub fn get(&self, row: usize, col: usize) -> &T {
-        &self.columns[col][row]
-    }
-
+    #[inline]
     pub fn get_segment(&self, row: usize, col: usize, rows: usize, cols: usize) -> Matrix<T> {
         assert!(
             row + rows < self.nrows(),
@@ -145,14 +158,7 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Copy> Matrix<T> {
-    pub fn get_mut(&mut self, row: usize, col: usize) -> &mut T {
-        &mut self.columns[col][row]
-    }
-
-    pub fn set(&mut self, row: usize, col: usize, value: T) {
-        self.columns[col][row] = value;
-    }
-
+    #[inline]
     pub fn set_segment(&mut self, row: usize, col: usize, segment: Matrix<T>) {
         let rows = segment.nrows();
         let cols = segment.ncols();
@@ -379,19 +385,6 @@ mod tests {
     }
 
     #[test]
-    fn get() {
-        let m = Matrix::from_function(10, 10, |x, y| 10 * x + y);
-        assert_eq!(&92, m.get(2, 9));
-    }
-
-    #[test]
-    fn set() {
-        let mut m = Matrix::zero(10, 10);
-        m.set(3, 4, 1);
-        assert_eq!(m.columns[4][3], 1);
-    }
-
-    #[test]
     fn get_segment() {
         let m: Matrix<i32> = Matrix::identity(10);
         let m3 = m.get_segment(0, 0, 3, 3);
@@ -551,6 +544,26 @@ mod tests {
                 assert_eq!(m.columns[i][j], m1.columns[i][j]);
             }
         }
+    }
+
+    #[test]
+    fn matrix_mul_unequal() {
+        let m1: Matrix<i32> = Matrix::from_vec(vec![
+            Vector::from_vec(vec![4, -2, 1, 9]),
+            Vector::from_vec(vec![-4, 2, 3, 10]),
+            Vector::from_vec(vec![5, 0, 7, 11]),
+            Vector::from_vec(vec![-1, 6, 8, 12]),
+        ]);
+        let m2: Matrix<i32> = Matrix::from_vec(vec![
+            Vector::from_vec(vec![4, 14, 15, 9]),
+            Vector::from_vec(vec![13, 2, -4, 10]),
+        ]);
+        let expected: Matrix<i32> = Matrix::from_vec(vec![
+            Vector::from_vec(vec![26, 74, 223, 449]),
+            Vector::from_vec(vec![14, 38, 71, 213]),
+        ]);
+
+        assert_eq!(m1 * m2, expected);
     }
 
     #[test]
