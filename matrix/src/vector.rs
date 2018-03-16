@@ -118,7 +118,11 @@ macro_rules! binary_operator {
             }
         }
 
-        impl<T: ops::$type<Output = T> + Copy> ops::$type<Vector<T>> for Vector<T> {
+        impl<T> ops::$type<Vector<T>> for Vector<T>
+        where
+            for<'a> &'a T: ops::$type<Output=T>
+
+        {
             type Output = Vector<T>;
 
             #[inline]
@@ -133,7 +137,7 @@ macro_rules! binary_operator {
                     elements: self.elements
                         .into_iter()
                         .zip(other.elements)
-                        .map(|(x, y)| Rc::new(*x $operator *y))
+                        .map(|(x, y)| Rc::new(&*x $operator &*y))
                         .collect()
                 }
             }
